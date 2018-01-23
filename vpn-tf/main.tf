@@ -13,7 +13,7 @@ resource "aws_instance" "vpn1" {
     }
     # package the setup script and config files
     provisioner "local-exec" {
-        command = "tar -czf setup_openvpn.tar.gz setup.sh configs"
+        command = "tar -czf setup_openvpn.tar.gz setup.sh make-client-config.sh configs"
     }
     # send the packaged files
     provisioner "file" {
@@ -27,7 +27,11 @@ resource "aws_instance" "vpn1" {
             "sudo apt-get -q -y install openvpn easy-rsa",
             "mkdir /tmp/openvpn",
             "tar -xzf /tmp/setup_openvpn.tar.gz -C /tmp/openvpn",
-            "chmod +x /tmp/openvpn/setup.sh"
+            "chmod +x /tmp/openvpn/setup.sh",
+            "chmod +x /tmp/openvpn/make-client-config.sh",
+            "mkdir -p /home/ubuntu/client-configs/files",
+            "chmod 700 /home/ubuntu/client-configs/files",
+            "mv /tmp/openvpn/configs/base.conf /home/ubuntu/client-configs/base.conf"
         ]
     }
 }
