@@ -1,14 +1,43 @@
 provider "aws" {
-    region = "eu-west-2"
+    region = "${var.region}"
 }
 
-resource "aws_instance" "vpn1" {
-    ami = "ami-fcc4db98"
+resource "aws_key_pair" "deployment_key" {
+    key_name = "${var.ssh_key_name}"
+    public_key = "${file(var.ssh_public_key_path)}"
+}
+
+resource "aws_security_group" "vpn_traffic" {
+    name = "vpn_traffic"
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+        from_port = "${var.port}"
+        to_port = "${var.port}"
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    egress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+    
+}
+
+resource "aws_instance" "openvpn_server" {
+    ami = "${lookup(var.images, var.region)}"
     instance_type = "t2.micro"
-    key_name = "london1"
+    key_name = "${var.ssh_key_name}"
+    security_groups = ["vpn_traffic"]
     connection {
         user = "ubuntu"
-        private_key = "${file("~/.ssh/london1.pem")}"
+        private_key = "${file(var.ssh_private_key_path)}"
         agent = "false"
     }
     # package the setup script and config files
@@ -28,10 +57,25 @@ resource "aws_instance" "vpn1" {
             "mkdir /tmp/openvpn",
             "tar -xzf /tmp/setup_openvpn.tar.gz -C /tmp/openvpn",
             "chmod +x /tmp/openvpn/setup.sh",
-            "chmod +x /tmp/openvpn/make-client-config.sh",
-            "mkdir -p /home/ubuntu/client-configs/files",
-            "chmod 700 /home/ubuntu/client-configs/files",
-            "mv /tmp/openvpn/configs/base.conf /home/ubuntu/client-configs/base.conf"
+            "echo 'port ${var.port}' >> /tmp/openvpn/configs/server.conf",
+            "echo 'remote ${aws_instance.openvpn_server.public_dns} ${var.port}' >> /tmp/openvpn/configs/base.conf",
+            "mkdir -p /tmp/openvpn/client-configs/files",
+            "chmod 700 /tmp/openvpn/client-configs/files",
+            "mv /tmp/openvpn/configs/base.conf /tmp/openvpn/client-configs/base.conf",
+            "/tmp/openvpn/setup.sh",
+            "sudo systemctl start openvpn@server"
         ]
     }
+    # retrieve the client key
+    provisioner "local-exec" {
+        command = "scp -o StrictHostKeyChecking=no -i ${var.ssh_private_key_path} ubuntu@${aws_instance.openvpn_server.public_dns}:/tmp/openvpn/client-configs/files/client.ovpn ${var.client_key_output_path}"
+    }
+}
+
+output "region" {
+    value = "${var.region}"
+}
+
+output "connect_string" {
+    value = "ssh -i ${var.ssh_private_key_path} ubuntu@${aws_instance.openvpn_server.public_dns}"
 }
