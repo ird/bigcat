@@ -42,7 +42,7 @@ resource "aws_instance" "openvpn_server" {
     }
     # package the setup script and config files
     provisioner "local-exec" {
-        command = "tar -czf setup_openvpn.tar.gz setup.sh make-client-config.sh configs"
+        command = "tar -czf setup_openvpn.tar.gz setup.sh configs"
     }
     # send the packaged files
     provisioner "file" {

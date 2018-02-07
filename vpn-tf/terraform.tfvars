@@ -1,5 +1,5 @@
 # port to host the server on
-port = "443"
+port = "80"
 # eu-west-2         = London
 # ap-southeast-2    = Sydney
 region = "eu-west-2"
