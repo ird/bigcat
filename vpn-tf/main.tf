@@ -27,7 +27,7 @@ resource "aws_security_group" "vpn_traffic" {
         protocol        = "-1"
         cidr_blocks     = ["0.0.0.0/0"]
     }
-    
+
 }
 
 resource "aws_instance" "openvpn_server" {
@@ -68,7 +68,11 @@ resource "aws_instance" "openvpn_server" {
     }
     # retrieve the client key
     provisioner "local-exec" {
-        command = "scp -o StrictHostKeyChecking=no -i ${var.ssh_private_key_path} ubuntu@${aws_instance.openvpn_server.public_dns}:/tmp/openvpn/client-configs/files/client.ovpn ${var.client_key_output_path}"
+        command =  "scp -o StrictHostKeyChecking=no -i ${var.ssh_private_key_path} ubuntu@${aws_instance.openvpn_server.public_dns}:/tmp/openvpn/client-configs/files/client.ovpn ${var.client_key_output_path}"
+    }
+
+    provisioner "local-exec" {
+        command = "rm setup_openvpn.tar.gz"
     }
 }
 

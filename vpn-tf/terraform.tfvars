@@ -1,5 +1,5 @@
 # port to host the server on
-port = "80"
+port = "443"
 # eu-west-2         = London
 # ap-southeast-2    = Sydney
 region = "eu-west-2"
@@ -11,4 +11,5 @@ client_key_output_path = "~/Desktop/client.ovpn"
 images = {
     "eu-west-2" = "ami-fcc4db98"
     "ap-southeast-2" = "ami-33ab5251"
+    "eu-central-1" = "ami-5055cd3f"
 }
