@@ -8,9 +8,10 @@ Terraform script to deploy an openvpn server to one of 3 regions, build a CA and
 
 ```sh
 # plan and deploy the instance. 
-terraform plan -var region=eu-west-2
-terraform deploy -var region=eu-west-2
+terraform plan -var 'region=eu-west-2'
+terraform apply -var 'region=eu-west-2'
 # set the destination for the config file in terraform.tfvars, pass as an argument or use the default
+# connect to your vpn
 openvpn --config client.ovpn
-terraform destroy -var region=eu-west-2
+terraform destroy -var 'region=eu-west-2'
 ```
